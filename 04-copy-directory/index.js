@@ -1,9 +1,27 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+async function deleteDirContents(dir) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  for (let entry of entries) {
+    const entryPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      await deleteDirContents(entryPath);
+      await fs.rmdir(entryPath);
+    } else {
+      await fs.unlink(entryPath);
+    }
+  }
+}
+
 async function copyDir(src, dest) {
   // Create the destination directory if it does not exist
   await fs.mkdir(dest, { recursive: true });
+
+  // Delete the contents of the destination directory
+  await deleteDirContents(dest);
 
   // Read the source directory
   const entries = await fs.readdir(src, { withFileTypes: true });
